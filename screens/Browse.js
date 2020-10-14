@@ -52,14 +52,14 @@ class Browse extends Component {
   }
   logout = async () => {
     const { navigation } = this.props;
-    await AsyncStorage.removeItem("@i9App:userDados");
-    await AsyncStorage.removeItem("@i9App:token");
+    await AsyncStorage.removeItem("@i9Servicos:userDados");
+    await AsyncStorage.removeItem("@i9Servicos:token");
 
     navigation.navigate("Welcome");
   };
 
   buscarDadosUser = async () => {
-    const usuario = await AsyncStorage.getItem("@i9App:userDados");
+    const usuario = await AsyncStorage.getItem("@i9Servicos:userDados");
     try {
       const response = await apiUsuario.get("/usuarios", {
         findByToken: "true",
@@ -69,7 +69,7 @@ class Browse extends Component {
 
       this.setState({ usuario: response.data });
       await AsyncStorage.multiSet([
-        ["@i9App:userDados", JSON.stringify(response.data)],
+        ["@i9Servicos:userDados", JSON.stringify(response.data)],
       ]);
     } catch (err) {
       Alert.alert("ERRO", "Erro ao buscar informações do usuário");

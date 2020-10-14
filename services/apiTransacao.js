@@ -6,7 +6,7 @@ const apiTransacao = create({
 });
 
 apiTransacao.addAsyncRequestTransform((request) => async () => {
-  const token = await AsyncStorage.getItem("@i9App:token");
+  const token = await AsyncStorage.getItem("@i9Servicos:token");
 
   if (token)
     request.headers["Authorization"] =

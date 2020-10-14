@@ -37,8 +37,8 @@ export default class Login extends Component {
       });
 
       await AsyncStorage.multiSet([
-        ["@i9App:token", JSON.stringify(response.data.token)],
-        ["@i9App:user", JSON.stringify(response.data)],
+        ["@i9Servicos:token", JSON.stringify(response.data.token)],
+        ["@i9Servicos:user", JSON.stringify(response.data)],
       ]);
 
       Keyboard.dismiss();

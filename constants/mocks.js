@@ -50,9 +50,9 @@ const explore = [
 ];
 
 const profile = {
-  username: "heitor.machado@i9app.com.br",
+  username: "heitor.machado@i9Servicos.com.br",
   location: "Brasil",
-  email: "heitor.machado@i9app.com.br",
+  email: "heitor.machado@i9Servicos.com.br",
   avatar: require("../assets/images/avatar.png"),
   budget: 1000,
   monthly_cap: 5000,

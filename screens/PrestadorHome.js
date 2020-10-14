@@ -91,15 +91,24 @@ class PrestadorHome extends Component {
       latitude: 38.8976763,
       longitude: -77.0387185,
       title: "",
-      app: "google-maps",
+      dialogTitle: "Deseja abrir em qual aplicativo?",
+      dialogMessage: "",
+      cancelText: "Cancelar",
     },
   };
 
   openEndereco() {
     const { dadosPrestador, options } = this.state;
-    console.log(dadosPrestador);
-
-    options.title = `${dadosPrestador.localizacao.logradouro}, ${dadosPrestador.localizacao.numero}, ${dadosPrestador.localizacao.cidade}, ${dadosPrestador.localizacao.cep}`;
+    options.dialogMessage = `Endereço:\n${
+      dadosPrestador.localizacao.logradouro
+    }, ${dadosPrestador.localizacao.numero}, ${
+      dadosPrestador.localizacao.cidade
+    }, ${dadosPrestador.localizacao.uf}, ${
+      dadosPrestador.localizacao.complemento
+        ? dadosPrestador.localizacao.complemento + ","
+        : ""
+    } ${dadosPrestador.localizacao.cep}`;
+    options.title = `${dadosPrestador.localizacao.logradouro}, ${dadosPrestador.localizacao.numero}, ${dadosPrestador.localizacao.cidade}, ${dadosPrestador.localizacao.uf}, ${dadosPrestador.localizacao.cep}`;
 
     showLocation(options);
   }
@@ -125,15 +134,27 @@ class PrestadorHome extends Component {
     }));
   }
 
+  newService() {
+    const { agendamento, dadosNegocio } = this.state;
+
+    agendamento.servico = dadosNegocio.servicos[0].servico;
+
+    this.setState({
+      showNewService: true,
+    });
+  }
+
   getByCep = async (cep) => {
-    const { usuario } = this.state;
+    const { usuario, dadosNegocio } = this.state;
     try {
       const response = await apiEndereco.get(cep + "/json");
       this.setState((prev) => ({
         agendamento: {
           ...prev.agendamento,
+          cpf_prop_estab: dadosNegocio.cpf_proprietario,
           cliente: {
             ...prev.agendamento.cliente,
+            cpf: usuario.cpf,
             endereco: {
               ...prev.agendamento.cliente.endereco,
               cep: cep,
@@ -141,7 +162,6 @@ class PrestadorHome extends Component {
               bairro: response.data.bairro,
               uf: response.data.uf,
               cidade: response.data.localidade,
-              cpf_proprietario: usuario.cpf,
             },
           },
         },
@@ -155,7 +175,9 @@ class PrestadorHome extends Component {
     const { navigation } = this.props;
     const { dadosPrestador } = this.state;
     console.log(dadosPrestador.cpf_proprietario);
-    const usuario = JSON.parse(await AsyncStorage.getItem("@i9App:userDados"));
+    const usuario = JSON.parse(
+      await AsyncStorage.getItem("@i9Servicos:userDados")
+    );
     this.setState({ usuario: usuario, loading: true });
 
     try {
@@ -178,41 +200,46 @@ class PrestadorHome extends Component {
   };
 
   saveAgendamento = async () => {
-    const { agendamento } = this.state;
-    console.log(JSON.stringify(agendamento));
+    const { agendamento, usuario, dadosNegocio } = this.state;
+
     const dataAgendamento = new Date(agendamento.data_hora);
     const dataIni = new Date(
       dataAgendamento.getFullYear(),
       dataAgendamento.getMonth(),
       1
     );
-    const dataFim = new Date(
-      dataAgendamento.getFullYear(),
-      dataAgendamento.getMonth() + 1,
-      0
-    );
-
     agendamento.data_hora = moment(new Date(agendamento.data_hora)).format(
       "YYYY-MM-DD HH:mm"
     );
 
+    this.setState((prev) => ({
+      agendamento: {
+        ...prev.agendamento,
+        cpf_prop_estab: dadosNegocio.cpf_proprietario,
+        cliente: {
+          ...prev.agendamento.cliente,
+          cpf: usuario.cpf,
+        },
+      },
+    }));
+
     try {
       this.setState({ loading: true });
       const response = await apiAgendamento.post("agendamento", agendamento);
+      console.log(response);
       this.setState({
         loading: false,
         showNewService: false,
-        mesSelected: dataIni.getMonth() + 1,
       });
       Alert.alert("Salvo!", "Dados salvos com sucesso.");
-      this.getAgendamentos("", dataIni, dataFim);
       this.setState({
         agendamento: {
-          cpf_prop_estab: null,
+          cpf_prop_estab: dadosNegocio.cpf_proprietario,
           data_hora: new Date(),
           status: "PENDENTE",
           cliente: {
             endereco: {},
+            cpf: usuario.cpf,
           },
           servico: {},
         },
@@ -240,16 +267,6 @@ class PrestadorHome extends Component {
     }
   }
 
-  onChangeMonth(month) {
-    this.setState({ mesSelected: month });
-    const dateParam = new Date();
-    this.getAgendamentos(
-      "",
-      new Date(dateParam.getFullYear(), month - 1, 1),
-      new Date(dateParam.getFullYear(), month, 0)
-    );
-  }
-
   onChange = (date) => {
     this.setState({ showDatePicker: false });
     const { agendamento } = this.state;
@@ -275,7 +292,6 @@ class PrestadorHome extends Component {
 
   renderTelefones() {
     const { showTelefones, dadosNegocio } = this.state;
-    console.log(dadosNegocio.contatos);
 
     return (
       <Modal
@@ -696,7 +712,6 @@ class PrestadorHome extends Component {
   render() {
     const { profile, navigation } = this.props;
     const { loading, dadosPrestador, dadosNegocio } = this.state;
-    console.log(dadosNegocio.horario_atendimento);
     return (
       <Block>
         <Block flex={false} row center space="between" style={styles.header}>
@@ -707,31 +722,28 @@ class PrestadorHome extends Component {
             <Image source={profile.avatar} style={styles.avatar} />
           </Button>
         </Block>
-        <Block style={styles.header}>
-          {dadosNegocio.horario_atendimento.map((horario) => (
-            <Block row key={horario.dia_semana}>
-              {horario.aberto ? (
-                <Text center>
-                  {horario.dia_semana}: {horario.inicio_atendimento} até{" "}
-                  {horario.fim_atendimento}
-                </Text>
-              ) : (
-                <Text center>{horario.dia_semana}: Não trabalha</Text>
-              )}
-            </Block>
-          ))}
-        </Block>
         <ScrollView showsHorizontalScrollIndicator={false}>
+          <Block style={styles.header}>
+            {dadosNegocio.horario_atendimento.map((horario) => (
+              <Block key={horario.dia_semana}>
+                {horario.aberto ? (
+                  <Text center>
+                    {horario.dia_semana}: {horario.inicio_atendimento} até{" "}
+                    {horario.fim_atendimento}
+                  </Text>
+                ) : (
+                  <Text center>{horario.dia_semana}: Não trabalha</Text>
+                )}
+              </Block>
+            ))}
+          </Block>
           {loading ? (
             <ActivityIndicator size="large" color="green" />
           ) : (
             this.renderServicos()
           )}
         </ScrollView>
-        <TouchableOpacity
-          onPress={() => this.setState({ showNewService: true })}
-          style={styles.fab}
-        >
+        <TouchableOpacity onPress={() => this.newService()} style={styles.fab}>
           <Text style={styles.fabIcon}>+</Text>
         </TouchableOpacity>
         {this.renderCreateService()}

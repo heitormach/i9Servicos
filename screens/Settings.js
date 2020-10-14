@@ -74,8 +74,8 @@ class Settings extends Component {
       });
 
       await AsyncStorage.multiSet([
-        ["@i9App:token", JSON.stringify(response.data.token)],
-        ["@i9App:user", JSON.stringify(response.data)],
+        ["@i9Servicos:token", JSON.stringify(response.data.token)],
+        ["@i9Servicos:user", JSON.stringify(response.data)],
       ]);
 
       this.buscarDadosUser();
@@ -87,7 +87,7 @@ class Settings extends Component {
   };
 
   buscarDadosUser = async () => {
-    const usuario = await AsyncStorage.getItem("@i9App:userDados");
+    const usuario = await AsyncStorage.getItem("@i9Servicos:userDados");
     try {
       const response = await apiUsuario.get("/usuarios", {
         findByToken: "true",
@@ -95,7 +95,7 @@ class Settings extends Component {
 
       this.setState({ usuario: response.data });
       await AsyncStorage.multiSet([
-        ["@i9App:userDados", JSON.stringify(response.data)],
+        ["@i9Servicos:userDados", JSON.stringify(response.data)],
       ]);
     } catch (err) {
       Alert.alert("ERRO", "Erro ao buscar informações do usuário");
@@ -104,7 +104,7 @@ class Settings extends Component {
   };
 
   getUsuario = async () => {
-    const usuario = JSON.parse(await AsyncStorage.getItem("@i9App:userDados"));
+    const usuario = JSON.parse(await AsyncStorage.getItem("@i9Servicos:userDados"));
     this.setState({
       usuario: usuario,
       senhaAtual: usuario.dados_login.senha,

@@ -30,7 +30,9 @@ class Prestadores extends Component {
   }
 
   getPrestadores = async () => {
-    const usuario = JSON.parse(await AsyncStorage.getItem("@i9App:userDados"));
+    const usuario = JSON.parse(
+      await AsyncStorage.getItem("@i9Servicos:userDados")
+    );
     this.setState({ usuario: usuario });
     try {
       this.setState({ loading: true });
@@ -48,8 +50,16 @@ class Prestadores extends Component {
     return (
       <Block row card shadow color="#fffcfc" style={styles.agend}>
         <Block flex={0.75} column middle>
-          <Text h3 bold style={{ paddingVertical: 8 }}>
+          <Text
+            h3
+            bold
+            color={theme.colors.primary}
+            style={{ paddingVertical: 8 }}
+          >
             {prest.nome}
+          </Text>
+          <Text h3 bold style={{ paddingVertical: 8 }}>
+            {prest.segmento}
           </Text>
           <Text h4 style={{ paddingVertical: 8 }}>
             Cidade: {prest.localizacao.cidade} - {prest.localizacao.uf}

@@ -33,7 +33,7 @@ class Welcome extends Component {
 
   getLoginData = async () => {
     const { navigation } = this.props;
-    const token = await AsyncStorage.getItem("@i9App:token");
+    const token = await AsyncStorage.getItem("@i9Servicos:token");
 
     if (token) {
       navigation.navigate("Browse");
