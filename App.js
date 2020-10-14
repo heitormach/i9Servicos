@@ -1,9 +1,9 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 
-import { AppLoading } from "expo";
+import { AppLoading, Notifications } from "expo";
 import { Asset } from "expo-asset";
-
+import * as Permissions from "expo-permissions";
 import Navigation from "./navigation";
 import { Block } from "./components";
 
@@ -28,19 +28,41 @@ const images = [
   require("./assets/images/illustration_1.png"),
   require("./assets/images/illustration_2.png"),
   require("./assets/images/illustration_3.png"),
-  require("./assets/images/avatar.png")
+  require("./assets/images/avatar.png"),
 ];
 
 export default class App extends React.Component {
   state = {
-    isLoadingComplete: false
+    isLoadingComplete: false,
+  };
+
+  componentDidMount = async () => {
+    //Funcao responsavel para montar o status de permissao para o envio de notificações
+    const { status: existingStatus } = await Permissions.getAsync(
+      Permissions.NOTIFICATIONS
+    );
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+      finalStatus = status;
+    }
+
+    //caso o finalStatus nao estiver liberado ou seja com granted, nao podera gerar o token de notificacaoes
+    if (finalStatus !== "granted") {
+      return;
+    }
+
+    //se todas as permissoes estiverem ok, sera gerado um token, que tem como objetivo a entrega das notificacoes
+    //unicamente para o dispositivo responsavel por pertencer a este token
+    let token = await Notifications.getExpoPushTokenAsync();
+    console.log(token);
   };
 
   handleResourcesAsync = async () => {
     // we're caching all the images
     // for better performance on the app
 
-    const cacheImages = images.map(image => {
+    const cacheImages = images.map((image) => {
       return Asset.fromModule(image).downloadAsync();
     });
 
@@ -52,7 +74,7 @@ export default class App extends React.Component {
       return (
         <AppLoading
           startAsync={this.handleResourcesAsync}
-          onError={error => console.warn(error)}
+          onError={(error) => console.warn(error)}
           onFinish={() => this.setState({ isLoadingComplete: true })}
         />
       );

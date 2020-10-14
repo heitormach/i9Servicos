@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 
 import { Button, Block, Text, Input } from "../components";
@@ -20,10 +21,19 @@ const { width } = Dimensions.get("window");
 import apiAgendamento from "../services/apiAgendamento";
 import { AsyncStorage } from "react-native";
 import apiEndereco from "../services/apiEndereco";
+import { showLocation } from "react-native-map-link";
 
 class Agendamento extends Component {
   state = {
     agendamentos: [],
+    options: {
+      latitude: 38.8976763,
+      longitude: -77.0387185,
+      title: "",
+      dialogTitle: "Deseja abrir em qual aplicativo?",
+      dialogMessage: "",
+      cancelText: "Cancelar",
+    },
     agendamento: {
       cpf_prop_estab: null,
       data_hora: new Date(),
@@ -32,11 +42,19 @@ class Agendamento extends Component {
         endereco: {},
       },
       servico: {},
+      estabelecimento: {
+        contatos: [],
+        localizacao: {},
+      },
     },
     agendamentoSelected: {
       data_hora: String(new Date()),
       servico: {},
       cliente: {},
+      estabelecimento: {
+        contatos: [],
+        localizacao: {},
+      },
     },
     usuario: {},
     mesSelected: new Date().getMonth() + 1,
@@ -79,18 +97,46 @@ class Agendamento extends Component {
     );
   }
 
+  openContato() {
+    const { agendamentoSelected } = this.state;
+
+    Linking.openURL(
+      `tel:${agendamentoSelected.estabelecimento.contatos[0].ddd}${agendamentoSelected.estabelecimento.contatos[0].numero}`
+    );
+  }
+
+  openEndereco() {
+    const { agendamentoSelected, options } = this.state;
+
+    options.dialogMessage = `Endereço:\n${
+      agendamentoSelected.estabelecimento.localizacao.logradouro
+    }, ${agendamentoSelected.estabelecimento.localizacao.numero}, ${
+      agendamentoSelected.estabelecimento.localizacao.cidade
+    }, ${agendamentoSelected.estabelecimento.localizacao.uf}, ${
+      agendamentoSelected.estabelecimento.localizacao.complemento
+        ? agendamentoSelected.estabelecimento.localizacao.complemento + ","
+        : ""
+    } ${agendamentoSelected.estabelecimento.localizacao.cep}`;
+    options.title = `${agendamentoSelected.estabelecimento.localizacao.logradouro}, ${agendamentoSelected.estabelecimento.localizacao.numero}, ${agendamentoSelected.estabelecimento.localizacao.cidade}, ${agendamentoSelected.estabelecimento.localizacao.uf}, ${agendamentoSelected.estabelecimento.localizacao.cep}`;
+
+    showLocation(options);
+  }
+
   cancelarAgendamento = async () => {
-    const { servicoSelected } = this.state;
+    const { agendamentoSelected } = this.state;
 
     try {
       this.setState({
         loading: true,
       });
       const response = await apiAgendamento.post("/agendamento/cancelar", {
-        id_agendamento: servicoSelected.id,
+        id_agendamento: agendamentoSelected.id,
       });
       this.setState((prev) => ({
-        servicoSelected: { ...prev.servicoSelected, status: "CANCELADO" },
+        agendamentoSelected: {
+          ...prev.agendamentoSelected,
+          status: "CANCELADO",
+        },
       }));
       Alert.alert("Cancelado!", "O agendamento foi cancelado com sucesso.");
       this.setState({
@@ -115,7 +161,7 @@ class Agendamento extends Component {
     }));
   }
 
-  getAgendamentos = async (status, dataInicio, dataFim) => {
+  getAgendamentos = async () => {
     const usuario = JSON.parse(
       await AsyncStorage.getItem("@i9Servicos:userDados")
     );
@@ -139,6 +185,7 @@ class Agendamento extends Component {
   };
 
   renderAgend(agend) {
+    console.log(agend);
     return (
       <Block row card shadow color="#fffcfc" style={styles.agend}>
         <Block
@@ -155,8 +202,8 @@ class Agendamento extends Component {
           </Block>
           <Block flex={0.7} center middle>
             <Text h2 white>
-              {new Date(agend.data_hora.substring(0, 10)).getDate() + 1}/
-              {new Date(agend.data_hora.substring(0, 10)).getMonth() + 1}
+              {new Date(agend.data_hora.substring(0, 10)).getUTCDate()}/
+              {new Date(agend.data_hora.substring(0, 10)).getUTCMonth() + 1}
             </Text>
           </Block>
         </Block>
@@ -208,6 +255,21 @@ class Agendamento extends Component {
             <Text h2>Status: {agendamentoSelected.status}</Text>
           </ScrollView>
           <Block middle padding={[theme.sizes.base / 2, 0]}>
+            <Button
+              color={theme.colors.primary}
+              onPress={() => this.openContato()}
+            >
+              <Text bold white center>
+                Entrar em contato com prestador
+              </Text>
+            </Button>
+            {agendamentoSelected.estabelecimento.localizacao.cep && (
+              <Button gradient onPress={() => this.openEndereco()}>
+                <Text bold white center>
+                  Endereço do Cliente
+                </Text>
+              </Button>
+            )}
             {agendamentoSelected.status !== "CANCELADO" &&
               agendamentoSelected.status !== "CONCLUIDO" && (
                 <Button color="accent" onPress={() => this.alertCancela()}>
