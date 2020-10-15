@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet } from "react-native";
 
 import { AppLoading } from "expo";
+import { AsyncStorage } from "react-native";
 import { Asset } from "expo-asset";
 import Navigation from "./navigation";
 import { Block } from "./components";
@@ -46,7 +47,12 @@ export default class App extends React.Component {
     return Promise.all(cacheImages);
   };
 
+  getToken = async () => {
+    console.log(await AsyncStorage.getItem("@i9Servicos:token"));
+  };
+
   render() {
+    this.getToken();
     if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
       return (
         <AppLoading

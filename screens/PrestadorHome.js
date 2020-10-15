@@ -724,19 +724,24 @@ class PrestadorHome extends Component {
                 </Text>
               </Card>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.openEndereco()} key={"teste"}>
-              <Card
-                color="#fffcfc"
-                center
-                middle
-                shadow
-                style={styles.agendamento}
+            {dadosNegocio.localizacao && (
+              <TouchableOpacity
+                onPress={() => this.openEndereco()}
+                key={"teste"}
               >
-                <Text medium height={20}>
-                  Endereço
-                </Text>
-              </Card>
-            </TouchableOpacity>
+                <Card
+                  color="#fffcfc"
+                  center
+                  middle
+                  shadow
+                  style={styles.agendamento}
+                >
+                  <Text medium height={20}>
+                    Endereço
+                  </Text>
+                </Card>
+              </TouchableOpacity>
+            )}
           </Block>
           {dadosNegocio.servicos.map((serv) => (
             <TouchableOpacity activeOpacity={0.8} key={`serv-${serv.id}`}>

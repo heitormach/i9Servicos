@@ -62,7 +62,8 @@ class Prestadores extends Component {
             {prest.segmento}
           </Text>
           <Text h4 style={{ paddingVertical: 8 }}>
-            Cidade: {prest.localizacao.cidade} - {prest.localizacao.uf}
+            Cidade: {prest.localizacao ? prest.localizacao.cidade : ""} -{" "}
+            {prest.localizacao ? prest.localizacao.uf : ""}
           </Text>
           <Text h4 style={{ paddingVertical: 8 }}>
             (Aperte para visualizar)

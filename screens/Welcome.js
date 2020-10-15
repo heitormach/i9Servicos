@@ -246,7 +246,7 @@ class Welcome extends Component {
               Serviços
             </Text>
           </Text>
-          <Text h3 gray2 style={{ marginTop: theme.sizes.padding / 2 }}>
+          <Text center h3 gray2 style={{ marginTop: theme.sizes.padding / 2 }}>
             Agende um serviço facilmente com os melhores!
           </Text>
         </Block>

@@ -272,10 +272,16 @@ class Agendamento extends Component {
         </Block>
         <Block flex={0.75} column middle>
           <Text h3 style={{ paddingVertical: 8 }}>
+            Prestador: {agend.estabelecimento.nome}
+          </Text>
+          <Text h3 style={{ paddingVertical: 8 }}>
             Serviço: {agend.servico.nome}
           </Text>
           <Text h3 style={{ paddingVertical: 8 }}>
             R$ {Number(agend.servico.preco).toFixed(2)}
+          </Text>
+          <Text h3 style={{ paddingVertical: 8 }}>
+            Horário: {agend.data_hora.substring(11, 16)}
           </Text>
           <Text h4 style={{ paddingVertical: 8 }}>
             (Aperte para visualizar)
@@ -308,6 +314,9 @@ class Agendamento extends Component {
             {dataCorrect.getMonth() + 1}
           </Text>
           <ScrollView style={{ marginVertical: theme.sizes.padding }}>
+            <Text h2>
+              Prestador: {agendamentoSelected.estabelecimento.nome}
+            </Text>
             <Text h2>Descrição do Serviço:</Text>
             <Text h3 light style={{ marginBottom: theme.sizes.base }}>
               {agendamentoSelected.servico.descricao}
@@ -326,7 +335,7 @@ class Agendamento extends Component {
                 Entrar em contato com prestador
               </Text>
             </Button>
-            {agendamentoSelected.estabelecimento.localizacao.cep && (
+            {agendamentoSelected.estabelecimento.localizacao && (
               <Button gradient onPress={() => this.openEndereco()}>
                 <Text bold white center>
                   Endereço do Prestador
