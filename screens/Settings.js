@@ -104,7 +104,9 @@ class Settings extends Component {
   };
 
   getUsuario = async () => {
-    const usuario = JSON.parse(await AsyncStorage.getItem("@i9Servicos:userDados"));
+    const usuario = JSON.parse(
+      await AsyncStorage.getItem("@i9Servicos:userDados")
+    );
     this.setState({
       usuario: usuario,
       senhaAtual: usuario.dados_login.senha,
@@ -231,9 +233,7 @@ class Settings extends Component {
                   <Block>
                     <Text gray2>Data de Nascimento</Text>
                     <Text>
-                      {moment(new Date(usuario.data_nascimento)).format(
-                        "DD/MM/YYYY"
-                      )}
+                      {moment(usuario.data_nascimento).format("DD/MM/YYYY")}
                     </Text>
                   </Block>
                   <Input
