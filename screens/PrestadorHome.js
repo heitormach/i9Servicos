@@ -134,6 +134,7 @@ class PrestadorHome extends Component {
     );
 
     this.setState({ usuario: usuario });
+    console.log(usuario.cpf);
   };
 
   changeServico(servico) {
@@ -165,17 +166,18 @@ class PrestadorHome extends Component {
 
   sendNotificacao = async () => {
     const { agendamento, token_notificacao, usuario } = this.state;
-    console.log(token_notificacao);
-    const dataAgendamento = moment(
-      new Date(String(agendamento.data_hora).substring(1, 10))
-    ).format("DD/MM/YYYY");
-    const horaAgendamento = String(agendamento.data_hora).substring(12, 6);
+    const dataAgendamento = moment(new Date(agendamento.data_hora)).format(
+      "DD/MM/YYYY"
+    );
+    const horaAgendamento = moment(new Date(agendamento.data_hora)).format(
+      "HH:mm"
+    );
     try {
       const response = await apiNotificacao.post("/send", {
         to: token_notificacao,
         sound: "default",
         title: "Agendamento Recebido",
-        body: `Foi solicitado um novo agendamento de serviço por ${usuario.nome}\nServiço: ${agendamento.servico.nome}\nData/Hora: ${dataAgendamento} - ${horaAgendamento} `,
+        body: `Foi solicitado um novo agendamento de serviço por ${usuario.nome_completo}\nServiço: ${agendamento.servico.nome}\nData/Hora: ${dataAgendamento} - ${horaAgendamento} `,
         data: {},
       });
     } catch (err) {
@@ -195,6 +197,7 @@ class PrestadorHome extends Component {
 
   getByCep = async (cep) => {
     const { usuario, dadosNegocio } = this.state;
+    console.log(cep);
     try {
       const response = await apiEndereco.get(cep + "/json");
       this.setState((prev) => ({
@@ -252,27 +255,15 @@ class PrestadorHome extends Component {
 
   saveAgendamento = async () => {
     const { agendamento, usuario, dadosNegocio } = this.state;
-
-    const dataAgendamento = new Date(agendamento.data_hora);
-    const dataIni = new Date(
-      dataAgendamento.getFullYear(),
-      dataAgendamento.getMonth(),
-      1
-    );
+    const antigaDataHora = agendamento.data_hora;
     agendamento.data_hora = moment(new Date(agendamento.data_hora)).format(
       "YYYY-MM-DD HH:mm"
     );
 
-    this.setState((prev) => ({
-      agendamento: {
-        ...prev.agendamento,
-        cpf_prop_estab: dadosNegocio.cpf_proprietario,
-        cliente: {
-          ...prev.agendamento.cliente,
-          cpf: usuario.cpf,
-        },
-      },
-    }));
+    console.log(dadosNegocio.cpf_proprietario, usuario.cpf);
+
+    agendamento.cliente.cpf = usuario.cpf;
+    agendamento.cpf_prop_estab = dadosNegocio.cpf_proprietario;
 
     try {
       this.setState({ loading: true });
@@ -283,12 +274,14 @@ class PrestadorHome extends Component {
         showNewService: false,
       });
 
+      agendamento.data_hora = antigaDataHora;
+
       this.sendNotificacao();
       Alert.alert("Agendado!", "Agendamento realizado com sucesso.");
       this.setState({
         agendamento: {
           cpf_prop_estab: dadosNegocio.cpf_proprietario,
-          data_hora: new Date(),
+          data_hora: antigaDataHora,
           status: "PENDENTE",
           cliente: {
             endereco: {},
@@ -300,7 +293,7 @@ class PrestadorHome extends Component {
     } catch (err) {
       this.setState({ loading: false });
       Alert.alert("Erro", JSON.stringify(err.data));
-      console.log(err);
+      agendamento.data_hora = antigaDataHora;
     }
   };
 

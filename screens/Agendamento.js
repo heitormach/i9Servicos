@@ -83,7 +83,7 @@ class Agendamento extends Component {
 
   showAgendamento(agendamento) {
     this.setState({ agendamentoSelected: agendamento, showModal: true });
-    console.log(agendamento);
+    console.log(agendamento.data_hora);
   }
 
   alertCancela() {
@@ -152,21 +152,23 @@ class Agendamento extends Component {
   };
 
   sendNotificacao = async () => {
-    const { agendamentoSelected, usuario } = this.state;
+    const { agendamentoSelected } = this.state;
 
+    console.log(agendamentoSelected.data_hora);
     const dataAgendamento = moment(
-      new Date(String(agendamentoSelected.data_hora).substring(1, 10))
+      String(agendamentoSelected.data_hora).substring(0, 10)
     ).format("DD/MM/YYYY");
     const horaAgendamento = String(agendamentoSelected.data_hora).substring(
-      12,
-      6
+      11,
+      16
     );
+
     try {
       const response = await apiNotificacao.post("/send", {
         to: agendamentoSelected.token_notif_prest,
         sound: "default",
         title: "Agendamento Cancelado",
-        body: `O agendamento de ${agendamentoSelected.servico.nome} no dia ${dataAgendamento} - ${horaAgendamento}  foi cancelado pelo cliente ${usuario.nome}`,
+        body: `O agendamento de ${agendamentoSelected.servico.nome} no dia ${dataAgendamento} - ${horaAgendamento}  foi cancelado pelo cliente ${agendamentoSelected.cliente.nome}`,
         data: {},
       });
     } catch (err) {
@@ -177,7 +179,6 @@ class Agendamento extends Component {
 
   cancelarAgendamento = async () => {
     const { agendamentoSelected } = this.state;
-
     try {
       this.setState({
         loading: true,
@@ -196,6 +197,7 @@ class Agendamento extends Component {
         loading: false,
       });
       this.sendNotificacao();
+      this.getAgendamentos();
     } catch (err) {
       Alert.alert("Erro", JSON.stringify(err.data));
       console.log(err);
@@ -238,7 +240,6 @@ class Agendamento extends Component {
   };
 
   renderAgend(agend) {
-    console.log(agend);
     return (
       <Block row card shadow color="#fffcfc" style={styles.agend}>
         <Block

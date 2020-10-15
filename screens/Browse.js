@@ -65,8 +65,6 @@ class Browse extends Component {
         findByToken: "true",
       });
 
-      console.log(response);
-
       this.setState({ usuario: response.data });
       await AsyncStorage.multiSet([
         ["@i9Servicos:userDados", JSON.stringify(response.data)],
