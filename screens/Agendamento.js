@@ -241,7 +241,7 @@ class Agendamento extends Component {
           space="between"
         >
           <Text h1 light>
-            {agendamentoSelected.servico.nome} - {dataCorrect.getDate() + 1}/
+            {agendamentoSelected.servico.nome} - {dataCorrect.getUTCDate()}/
             {dataCorrect.getMonth() + 1}
           </Text>
           <ScrollView style={{ marginVertical: theme.sizes.padding }}>
@@ -266,7 +266,7 @@ class Agendamento extends Component {
             {agendamentoSelected.estabelecimento.localizacao.cep && (
               <Button gradient onPress={() => this.openEndereco()}>
                 <Text bold white center>
-                  Endereço do Cliente
+                  Endereço do Prestador
                 </Text>
               </Button>
             )}
