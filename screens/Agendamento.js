@@ -20,8 +20,9 @@ import moment from "moment";
 const { width } = Dimensions.get("window");
 import apiAgendamento from "../services/apiAgendamento";
 import { AsyncStorage } from "react-native";
-import apiEndereco from "../services/apiEndereco";
+import apiNotificacao from "../services/apiNotificacao";
 import { showLocation } from "react-native-map-link";
+import apiUsuario from "../services/apiUsuario";
 
 class Agendamento extends Component {
   state = {
@@ -66,6 +67,7 @@ class Agendamento extends Component {
     showEndereco: false,
     loading: false,
     showModal: false,
+    token_notificacao: "",
   };
 
   componentDidMount() {
@@ -76,10 +78,12 @@ class Agendamento extends Component {
     navigation.addListener("willFocus", () => {
       this.getAgendamentos();
     });
+    this.getUserDados();
   }
 
   showAgendamento(agendamento) {
     this.setState({ agendamentoSelected: agendamento, showModal: true });
+    console.log(agendamento);
   }
 
   alertCancela() {
@@ -122,6 +126,55 @@ class Agendamento extends Component {
     showLocation(options);
   }
 
+  getUserDados = async () => {
+    const usuario = JSON.parse(
+      await AsyncStorage.getItem("@i9Servicos:userDados")
+    );
+
+    this.setState({ usuario: usuario });
+  };
+
+  getTokenNotificacao = async () => {
+    const { agendamentoSelected } = this.state;
+
+    try {
+      const response = await apiUsuario.get("/usuarios/notificacao", {
+        cpf: agendamentoSelected.cpf_proprietario,
+        tipo: "PRESTADOR",
+      });
+
+      this.setState({
+        token_notificacao: response.data.token_notificacao,
+      });
+    } catch (err) {
+      Alert.alert("Erro", JSON.stringify(err.data));
+    }
+  };
+
+  sendNotificacao = async () => {
+    const { agendamentoSelected, usuario } = this.state;
+
+    const dataAgendamento = moment(
+      new Date(String(agendamentoSelected.data_hora).substring(1, 10))
+    ).format("DD/MM/YYYY");
+    const horaAgendamento = String(agendamentoSelected.data_hora).substring(
+      12,
+      6
+    );
+    try {
+      const response = await apiNotificacao.post("/send", {
+        to: agendamentoSelected.token_notif_prest,
+        sound: "default",
+        title: "Agendamento Cancelado",
+        body: `O agendamento de ${agendamentoSelected.servico.nome} no dia ${dataAgendamento} - ${horaAgendamento}  foi cancelado pelo cliente ${usuario.nome}`,
+        data: {},
+      });
+    } catch (err) {
+      Alert.alert("Erro", JSON.stringify(err.data));
+      console.log(err);
+    }
+  };
+
   cancelarAgendamento = async () => {
     const { agendamentoSelected } = this.state;
 
@@ -142,7 +195,7 @@ class Agendamento extends Component {
       this.setState({
         loading: false,
       });
-      this.getById();
+      this.sendNotificacao();
     } catch (err) {
       Alert.alert("Erro", JSON.stringify(err.data));
       console.log(err);
@@ -192,10 +245,19 @@ class Agendamento extends Component {
           flex={0.25}
           card
           column
-          color="secondary"
+          color={agend.status === "CANCELADO" ? "orange" : "secondary"}
           style={styles.agendStatus}
         >
-          <Block flex={0.25} middle center color={theme.colors.primary}>
+          <Block
+            flex={0.25}
+            middle
+            center
+            color={
+              agend.status === "CANCELADO"
+                ? theme.colors.accent
+                : theme.colors.primary
+            }
+          >
             <Text h2 white style={{ textTransform: "uppercase" }}>
               Data
             </Text>

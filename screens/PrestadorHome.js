@@ -20,10 +20,11 @@ import moment from "moment";
 const { width } = Dimensions.get("window");
 import apiAgendamento from "../services/apiAgendamento";
 import apiNegocio from "../services/apiNegocio";
+import apiNotificacao from "../services/apiNotificacao";
 import { AsyncStorage } from "react-native";
 import apiEndereco from "../services/apiEndereco";
+import apiUsuario from "../services/apiUsuario";
 import { showLocation } from "react-native-map-link";
-
 class PrestadorHome extends Component {
   state = {
     dadosPrestador: this.props.navigation.state.params.prestador,
@@ -95,6 +96,8 @@ class PrestadorHome extends Component {
       dialogMessage: "",
       cancelText: "Cancelar",
     },
+    token_notificacao: "",
+    usuario: {},
   };
 
   openEndereco() {
@@ -115,15 +118,23 @@ class PrestadorHome extends Component {
 
   componentDidMount() {
     //  this.setState({ agends: this.props.agends });
-    const { navigation } = this.props;
+    const { navigation, dadosPrestador } = this.props;
 
     this.setState({
       dadosPrestador: navigation.state.params.prestador,
     });
 
-    console.log(this.state.dadosPrestador);
     this.getPrestador();
+    this.getUserDados();
   }
+
+  getUserDados = async () => {
+    const usuario = JSON.parse(
+      await AsyncStorage.getItem("@i9Servicos:userDados")
+    );
+
+    this.setState({ usuario: usuario });
+  };
 
   changeServico(servico) {
     this.setState((prev) => ({
@@ -133,6 +144,44 @@ class PrestadorHome extends Component {
       },
     }));
   }
+
+  getTokenNotificacao = async () => {
+    const { dadosNegocio } = this.state;
+
+    try {
+      const response = await apiUsuario.get("usuarios/notificacao", {
+        cpf: String(dadosNegocio.cpf_proprietario),
+        tipo: "PRESTADOR",
+      });
+
+      this.setState({
+        token_notificacao: response.data.token_notificacao,
+      });
+    } catch (err) {
+      Alert.alert("Erro", JSON.stringify(err.data));
+      console.log(err);
+    }
+  };
+
+  sendNotificacao = async () => {
+    const { agendamento, token_notificacao, usuario } = this.state;
+    console.log(token_notificacao);
+    const dataAgendamento = moment(
+      new Date(String(agendamento.data_hora).substring(1, 10))
+    ).format("DD/MM/YYYY");
+    const horaAgendamento = String(agendamento.data_hora).substring(12, 6);
+    try {
+      const response = await apiNotificacao.post("/send", {
+        to: token_notificacao,
+        sound: "default",
+        title: "Agendamento Recebido",
+        body: `Foi solicitado um novo agendamento de serviço por ${usuario.nome}\nServiço: ${agendamento.servico.nome}\nData/Hora: ${dataAgendamento} - ${horaAgendamento} `,
+        data: {},
+      });
+    } catch (err) {
+      Alert.alert("Erro", JSON.stringify(err.data));
+    }
+  };
 
   newService() {
     const { agendamento, dadosNegocio } = this.state;
@@ -192,6 +241,8 @@ class PrestadorHome extends Component {
         dadosNegocio: response.data,
         loading: false,
       });
+
+      this.getTokenNotificacao();
     } catch (err) {
       console.log(err);
       Alert.alert("Erro", JSON.stringify(err.data));
@@ -231,7 +282,9 @@ class PrestadorHome extends Component {
         loading: false,
         showNewService: false,
       });
-      Alert.alert("Salvo!", "Dados salvos com sucesso.");
+
+      this.sendNotificacao();
+      Alert.alert("Agendado!", "Agendamento realizado com sucesso.");
       this.setState({
         agendamento: {
           cpf_prop_estab: dadosNegocio.cpf_proprietario,
@@ -736,6 +789,11 @@ class PrestadorHome extends Component {
                 )}
               </Block>
             ))}
+            {dadosNegocio.atendimento_domiciliar ? (
+              <Text center>Faz atendimento domiciliar</Text>
+            ) : (
+              <Text center>Não faz atendimento domiciliar</Text>
+            )}
           </Block>
           {loading ? (
             <ActivityIndicator size="large" color="green" />

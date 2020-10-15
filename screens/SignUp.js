@@ -83,12 +83,10 @@ export default class SignUp extends Component {
     try {
       this.setState({ loading: true });
 
-      const response = await apiUsuario.post("/usuarios/token", null, {
-        params: {
-          login: dados_login.login,
-          senha: dados_login.senha,
-          tipo_usuario: tipo_usuario,
-        },
+      const response = await apiUsuario.post("/usuarios/token", {
+        login: dados_login.login,
+        senha: dados_login.senha,
+        tipo_usuario: tipo_usuario,
       });
 
       await AsyncStorage.multiSet([

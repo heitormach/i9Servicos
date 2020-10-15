@@ -28,12 +28,10 @@ export default class Login extends Component {
     try {
       this.setState({ loading: true });
 
-      const response = await apiUsuario.post("/usuarios/token", null, {
-        params: {
-          login: login,
-          senha: senha,
-          tipo_usuario: tipo_usuario,
-        },
+      const response = await apiUsuario.post("/usuarios/token", {
+        login: login,
+        senha: senha,
+        tipo_usuario: tipo_usuario,
       });
 
       await AsyncStorage.multiSet([
